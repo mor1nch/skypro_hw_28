@@ -5,4 +5,5 @@ from ads import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.StartView.as_view()),
+    path('data/', views.DataView.as_view()),
 ]
