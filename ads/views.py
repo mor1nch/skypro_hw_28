@@ -17,7 +17,7 @@ class StartView(View):
         return JsonResponse(response, status=200)
 
 
-class DataView(View):
+class AdsDataView(View):
     def get(self, request):
         with open('datasets/ads.json') as file:
             data1 = json.load(file)
@@ -38,6 +38,7 @@ class AdsView(View):
 
         for ads_item in ads:
             response.append({
+                "id": ads_item.id,
                 "name": ads_item.name,
                 "author": ads_item.author,
                 "price": ads_item.price,
@@ -52,6 +53,7 @@ class AdsView(View):
         ads_data = json.loads(request.body)
         ads = Ads()
 
+        ads.id = ads_data["id"]
         ads.name = ads_data["name"]
         ads.author = ads_data["author"]
         ads.price = ads_data["price"]
@@ -64,7 +66,9 @@ class AdsView(View):
             return JsonResponse(e.message_dict, status=422)
 
         ads.save()
+
         return JsonResponse({
+            "id": ads.id,
             "name": ads.name,
             "author": ads.author,
             "price": ads.price,
@@ -75,10 +79,11 @@ class AdsView(View):
 
 
 class AdsEntityView(View):
-    def get(self, request, id):
-        ads = get_object_or_404(Ads, id=id)
+    def get(self, request, pk):
+        ads = get_object_or_404(Ads, id=pk)
 
         return JsonResponse({
+            "id": ads.id,
             "name": ads.name,
             "author": ads.author,
             "price": ads.price,
