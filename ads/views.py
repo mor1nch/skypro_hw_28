@@ -24,7 +24,7 @@ class AdsDataView(View):
 
             for item in data1:
                 ads = Ads(name=item['name'], author=item['author'], price=item['price'],
-                          description=item['description'], address=item['address'])
+                          description=item['description'], address=item['address'], is_published=item['is_published'])
                 ads.save()
 
         return JsonResponse({"status": "ads completed"}, status=200)
