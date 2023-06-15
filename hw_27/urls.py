@@ -1,18 +1,17 @@
+from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
-from ads.views import StartView, AdsDataView, AdsView, AdsEntityView
-from categories.views import CategoriesDataView, CategoriesView, CategoriesEntityView
+from ads import views
+from hw_27 import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', StartView.as_view()),
-
-    path('ad/', AdsView.as_view()),
-    path('ad/data/', AdsDataView.as_view()),
-    path('ad/<int:pk>/', AdsEntityView.as_view()),
-
-    path('cat/', CategoriesView.as_view()),
-    path('cat/data/', CategoriesDataView.as_view()),
-    path('cat/<int:pk>/', CategoriesEntityView.as_view()),
+    path('', views.StartView.as_view()),
+    path("ad/", include("ads.urls")),
+    path("cat/", include("categories.urls")),
+    path("user/", include("users.urls")),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

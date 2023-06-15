@@ -1,54 +1,42 @@
 import json
 
-from django.shortcuts import get_object_or_404
-from django.views import View
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.core.exceptions import ValidationError
+from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView
 
 from categories.models import Categories
 
 
-class CategoriesDataView(View):
-    def get(self, request):
-        with open('datasets/categories.json') as file:
-            data2 = json.load(file)
+class CategoryListView(ListView):
+    model = Categories
 
-            for item in data2:
-                categories = Categories(name=item['name'])
-                categories.save()
+    def get(self, request, *args, **kwargs):
+        super().get(request, *args, **kwargs)
 
-        return JsonResponse({"status": "categories completed"}, status=200)
+        self.object_list = self.object_list.order_by('name')
 
-
-@method_decorator(csrf_exempt, name='dispatch')
-class CategoriesView(View):
-    def get(self, request):
-        categories = Categories.objects.all()
-        response = []
-
-        for category in categories:
-            response.append({
+        categories = []
+        for category in self.object_list:
+            categories.append({
                 "id": category.id,
                 "name": category.name,
             })
 
-        return JsonResponse(response, safe=False)
+        return JsonResponse(categories, safe=False)
 
-    def post(self, request):
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CategoryCreateView(CreateView):
+    model = Categories
+    fields = ['name']
+
+    def post(self, request, *args, **kwargs):
         category_data = json.loads(request.body)
-        category = Categories()
 
-        category.id = category_data["id"]
-        category.name = category_data["name"]
-
-        try:
-            category.full_clean()
-        except ValidationError as e:
-            return JsonResponse(e.message_dict, status=422)
-
-        category.save()
+        category = Categories.objects.create(
+            name=category_data['name'],
+        )
 
         return JsonResponse({
             "id": category.id,
@@ -56,11 +44,48 @@ class CategoriesView(View):
         })
 
 
-class CategoriesEntityView(View):
-    def get(self, request, pk):
-        category = get_object_or_404(Categories, id=pk)
+@method_decorator(csrf_exempt, name='dispatch')
+class CategoryUpdateView(UpdateView):
+    model = Categories
+    fields = ['name']
+
+    def post(self, request, *args, **kwargs):
+        super().post(request, *args, **kwargs)
+
+        vacancy_data = json.loads(request.body)
+
+        if vacancy_data['name'] is not None:
+            self.object.name = vacancy_data['name']
+
+        self.object.save()
 
         return JsonResponse({
-            "id": category.id,
-            "name": category.name,
+            "id": self.object.id,
+            "name": self.object.name,
+        })
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CategoryDeleteView(DeleteView):
+    model = Categories
+    success_url = '/'
+
+    def delete(self, request, *args, **kwargs):
+        super().delete(request, *args, **kwargs)
+
+        return JsonResponse({"status": "ok"}, status=200)
+
+
+class CategoriesDetailView(DetailView):
+    model = Categories
+
+    def get(self, request, *args, **kwargs):
+        try:
+            categories = self.get_object()
+        except:
+            return JsonResponse({'error': "not found"}, status=404)
+
+        return JsonResponse({
+            "id": categories.id,
+            "name": categories.name,
         })
